@@ -1,13 +1,28 @@
-import React from 'react';
+import React, { useState }  from 'react';
+import firebase from '../../firebase'
 import './App.css';
 import  Articles  from '../Articles';
 import  Main  from '../Main';
 import  Header  from '../Header';
 import { BrowserRouter as Router, Redirect, Route, Switch } from 'react-router-dom';
-import data from '../../data/data.json';
 
 function App() {
-  const article = data.map((el) => {
+
+  const [fireCollection, setFireCollection] = useState([]);
+
+  React.useEffect(() => {
+    const fetchData = async () => {
+      const db = firebase.firestore();
+      const data = await db.collection('data').get();
+      setFireCollection(
+          data.docs.map((doc) => ({ ...doc.data(), id: doc.id }))
+      );
+    };
+    fetchData();
+  }, []);
+
+
+  const article = fireCollection.map((el) => {
     return (
       <Route exact path={`/article/${el.id}`} key={el.id}>
         <Articles description={el.articleDescr} src={el.img} title={el.description} />
@@ -22,8 +37,10 @@ function App() {
       <Switch>
         <Route exact path="/">
           <Redirect to="/article" />
+          </Route>
+        <Route exact path="/article">
+          <Main data={fireCollection} />
         </Route>
-        <Route exact path="/article" component={Main} />
         {article}
       </Switch>
     </Router>
